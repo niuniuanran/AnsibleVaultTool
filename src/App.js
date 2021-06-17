@@ -2,17 +2,26 @@ import logo from './logo.svg';
 import './App.css';
 import React, {useState} from 'react'; 
 import {Vault} from "ansible-vault"
-import {TextField, Button, TextareaAutosize, FormGroup, Checkbox, FormControlLabel} from '@material-ui/core';
-
+import {TextField, Button, TextareaAutosize, Typography, Checkbox, FormControlLabel, Card} from '@material-ui/core';
+import base64 from "base-64"
+import utf8 from "utf8"
 
 function App() {
   const [password, setPassword]=useState("")
   const [plaintext, setPlaintext] = useState("")
   const [cryptext, setCryptext] = useState("")
-  const [base64, setBase64] = useState(false)
+  const [base64Text, setBase64Text] = useState("")
+  const [willBase64, setWillBase64] = useState(false)
   const runEncrypt = () => {
     const v = new Vault({password: password})
-    v.encrypt(plaintext).then(setCryptext)
+    if(willBase64) {
+      const bytes = utf8.encode(plaintext);
+      const encoded = base64.encode(bytes);
+      setBase64Text(encoded)
+      v.encrypt(encoded).then(setCryptext)
+    } else{
+      v.encrypt(plaintext).then(setCryptext)
+    }
   }
   return (
     <div className="App">
@@ -22,18 +31,28 @@ function App() {
       <div>
       <FormControlLabel
         control={<Checkbox
-          checked={base64}
-          onChange={e => setBase64(e.target.checked)}
+          checked={willBase64}
+          onChange={e => setWillBase64(e.target.checked)}
           inputProps={{ 'aria-label': 'primary checkbox' }}
         />}
         label="Base64 encode before encrypting"
       />
-       
-             <Button onClick={() => runEncrypt()} color="primary">Encrypt</Button>
+        <Button onClick={() => runEncrypt()} color="primary">Encrypt</Button>
        </div>
-      <FormGroup>
-      <TextareaAutosize rows="5" type="text" disabled value={cryptext}/>
-      </FormGroup>
+       <Card>
+         <h2>
+           Base64:
+         </h2>
+        <Typography>
+          {base64Text}
+        </Typography>
+        </Card>
+        <h2>
+           Encrypted:
+         </h2>
+        <TextareaAutosize value={cryptext}/>
+        
+          
       </form>
     </div>
   );
